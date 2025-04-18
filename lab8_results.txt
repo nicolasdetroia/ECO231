@@ -1,0 +1,34 @@
+Question 1 Answer:
+ The plot (sales_plot.png) shows a strong upward trend in sales from 1985 to 2019.
+ No seasonal component exists due to annual data.
+ Cyclical patterns are visible (e.g., dips around 1994, 2004, 2011), possibly due to economic cycles.
+ Irregular components appear as short-term fluctuations around the trend.
+ 
+Question 2 Answer:
+ Regression results: Intercept = 0.402, Slope = 4.296, R² = 0.980.
+ Residual plots (residual_plots.png, residuals_vs_time.png) show a pattern in residuals vs. time,
+ with positive residuals early and late, negative in the middle, suggesting autocorrelation.
+ Q-Q plot shows slight deviations from normality at the tails.
+ Residuals vs. fitted show no clear heteroscedasticity.
+ ZINE assumptions are violated due to autocorrelation.
+ 
+Question 3 Answer:
+ DW statistic = 0.821, p-value = 0.000.
+ Since p < 0.05, there is evidence of positive first-order autocorrelation.
+ 
+Question 4 Answer:
+ The regression assumes independent errors (ZINE's Independence).
+ The DW test (DW < 2, p < 0.05) indicates first-order autocorrelation,
+ violating this assumption. This leads to biased standard errors,
+ unreliable t-tests, and inefficient estimates.
+ 
+Question 5 Answer:
+ I recommend a regression model (Sales = b0 + b1T) with first-order autocorrelation
+ correction using GLS with an AR(1) error structure, implemented via nlme::gls.
+ 
+Question 6 Answer:
+ Simple OLS: Intercept = 0.402, SE = 2.206; Slope = 4.296, SE = 0.107.
+ GLS with AR(1): Intercept = 0.405, SE = 3.812; Slope = 4.296, SE = 0.181.
+ Intercept changed by 0.004, SE increased. Slope changed by 0.000, SE increased.
+ GLS provides more reliable estimates by accounting for autocorrelation.
+ 
