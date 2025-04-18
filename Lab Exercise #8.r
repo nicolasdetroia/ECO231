@@ -1,134 +1,171 @@
 # ECO 231 Applied Business Statistics
+# Lab 8 - Sales Data Analysis
+# I'm using R to analyze sales data from 1985 to 2019 and do some regression stuff
 
-if (!require(lmtest)) install.packages("lmtest", repos = "https://cloud.r-project.org")
-if (!require(nlme)) install.packages("nlme", repos = "https://cloud.r-project.org")
-if (!require(ggplot2)) install.packages("ggplot2", repos = "https://cloud.r-project.org")
-
-library(lmtest)  
-library(nlme)    
-library(ggplot2) 
-
-base_path <- "/Users/nicolasdetroia/Documents/College "
-
-if (!dir.exists(base_path)) {
-  dir.create(base_path, recursive = TRUE)
-  cat("Created directory:", base_path, "\n")
+# Install packages if I don't have them already
+if (!require(lmtest)) {
+  install.packages("lmtest", repos = "https://cloud.r-project.org")
+}
+if (!require(nlme)) {
+  install.packages("nlme", repos = "https://cloud.r-project.org")
+}
+if (!require(ggplot2)) {
+  install.packages("ggplot2", repos = "https://cloud.r-project.org")
 }
 
-data <- data.frame(
-  Trend = 1:35,
-  SALES = c(4.8, 4, 5.5, 15.6, 23.1, 23.3, 31.4, 46, 46.1, 41.9, 45.5, 53.5, 48.4, 61.6, 65.6, 71.4, 83.4, 93.6, 94.2, 85.4, 86.2, 89.9, 89.2, 99.1, 100.3, 111.7, 108.2, 115.5, 119.2, 125.2, 136.3, 146.8, 146.1, 151.4, 150.9),
-  Year = 1985:2019
+# Load the libraries I need
+library(lmtest)
+library(nlme)
+library(ggplot2)
+
+# Set up my working directory
+my_folder <- "/Users/nicolasdetroia/Documents/College"
+if (!dir.exists(my_folder)) {
+  dir.create(my_folder, recursive = TRUE)
+  print(paste("Made a new folder at:", my_folder))
+}
+
+# Create the sales data (this is the data from the assignment)
+sales_data <- data.frame(
+  time_trend = 1:35,
+  sales_millions = c(4.8, 4, 5.5, 15.6, 23.1, 23.3, 31.4, 46, 46.1, 41.9, 45.5, 
+                     53.5, 48.4, 61.6, 65.6, 71.4, 83.4, 93.6, 94.2, 85.4, 86.2, 
+                     89.9, 89.2, 99.1, 100.3, 111.7, 108.2, 115.5, 119.2, 125.2, 
+                     136.3, 146.8, 146.1, 151.4, 150.9),
+  year = 1985:2019
 )
 
-data$T <- data$Trend
-data$Sales <- data$SALES
-data$Year <- data$Year
+# I’ll rename columns to make it easier to work with
+sales_data$time <- sales_data$time_trend
+sales_data$sales <- sales_data$sales_millions
+sales_data$year <- sales_data$year
 
-p1 <- ggplot(data, aes(x = Year, y = Sales)) +
-  geom_line(color = "blue") +
-  geom_point(color = "blue") +
-  labs(title = "Annual Sales (1985–2019)", x = "Year", y = "Sales ($ million)") +
+# Plotting the sales over time to see what’s going on
+sales_plot <- ggplot(sales_data, aes(x = year, y = sales)) +
+  geom_line(color = "darkblue") +
+  geom_point(color = "red") +
+  labs(title = "Sales Over Time (1985-2019)", x = "Year", y = "Sales (Millions $)") +
   theme_minimal()
-ggsave(file.path(base_path, "sales_plot.png"), plot = p1, width = 8, height = 6)
+ggsave(file.path(my_folder, "sales_trend_plot.png"), plot = sales_plot, width = 7, height = 5)
 
-q1_answer <- paste(
-  "The plot (sales_plot.png) shows a strong upward trend in sales from 1985 to 2019.\n",
-  "No seasonal component exists due to annual data.\n",
-  "Cyclical patterns are visible (e.g., dips around 1994, 2004, 2011), possibly due to economic cycles.\n",
-  "Irregular components appear as short-term fluctuations around the trend.\n"
+# Answer for Question 1 (describing the plot)
+q1_text <- paste(
+  "The plot I made (sales_trend_plot.png) shows sales going up from 1985 to 2019.\n",
+  "It’s mostly a steady increase, so there’s a clear trend.\n",
+  "No seasonal patterns since it’s yearly data, not monthly.\n",
+  "There are some ups and downs (like around 1994 and 2004) that might be economic cycles.\n",
+  "Some small random wiggles are probably irregular stuff.\n"
 )
 
-model1 <- lm(Sales ~ T, data = data)
-summary_model1 <- summary(model1)
+# Run a simple linear regression (sales vs time)
+simple_model <- lm(sales ~ time, data = sales_data)
+model_summary <- summary(simple_model)
 
-png(file.path(base_path, "residual_plots.png"))
+# Save residual plots to check the model
+png(file.path(my_folder, "model_residuals.png"))
 par(mfrow = c(2, 2))
-plot(model1, which = 1:4)
+plot(simple_model, which = 1:4)
 dev.off()
 
-p2 <- ggplot(data.frame(T = data$T, Residuals = residuals(model1)), aes(x = T, y = Residuals)) +
+# Make a residual plot with ggplot
+resid_plot <- ggplot(data.frame(time = sales_data$time, resid = residuals(simple_model)), 
+                     aes(x = time, y = resid)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(title = "Residuals vs. Time", x = "Time (T)", y = "Residuals") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals Over Time", x = "Time", y = "Residuals") +
   theme_minimal()
-ggsave(file.path(base_path, "residuals_vs_time.png"), plot = p2, width = 8, height = 6)
+ggsave(file.path(my_folder, "time_vs_residuals.png"), plot = resid_plot, width = 7, height = 5)
 
-b0_1 <- summary_model1$coefficients[1, 1]
-b1_1 <- summary_model1$coefficients[2, 1]
-r2_1 <- summary_model1$r.squared
-q2_answer <- paste(
-  sprintf("Regression results: Intercept = %.3f, Slope = %.3f, R² = %.3f.\n", b0_1, b1_1, r2_1),
-  "Residual plots (residual_plots.png, residuals_vs_time.png) show a pattern in residuals vs. time,\n",
-  "with positive residuals early and late, negative in the middle, suggesting autocorrelation.\n",
-  "Q-Q plot shows slight deviations from normality at the tails.\n",
-  "Residuals vs. fitted show no clear heteroscedasticity.\n",
-  "ZINE assumptions are violated due to autocorrelation.\n"
+# Get regression coefficients for Question 2
+intercept <- model_summary$coefficients[1, 1]
+slope <- model_summary$coefficients[2, 1]
+r_squared <- model_summary$r.squared
+
+q2_text <- paste(
+  paste("My regression gives: Intercept =", round(intercept, 3), 
+        ", Slope =", round(slope, 3), ", R² =", round(r_squared, 3), "\n"),
+  "The residual plots (model_residuals.png, time_vs_residuals.png) show a pattern.\n",
+  "Residuals are positive at the start and end, negative in the middle.\n",
+  "This probably means there’s autocorrelation in the data.\n",
+  "The Q-Q plot has some weird tails, so maybe not perfectly normal.\n",
+  "No obvious heteroscedasticity in residuals vs fitted plot.\n",
+  "The ZINE assumptions (especially independence) are probably violated.\n"
 )
 
-dw_result <- dwtest(model1)
-dw_stat <- dw_result$statistic
-dw_pvalue <- dw_result$p.value
+# Do the Durbin-Watson test for autocorrelation
+dw_test <- dwtest(simple_model)
+dw_value <- dw_test$statistic
+dw_p <- dw_test$p.value
 
-q3_answer <- paste(
-  sprintf("DW statistic = %.3f, p-value = %.3f.\n", dw_stat, dw_pvalue),
-  "Since p < 0.05, there is evidence of positive first-order autocorrelation.\n"
+q3_text <- paste(
+  paste("Durbin-Watson test: DW =", round(dw_value, 3), ", p-value =", round(dw_p, 3), "\n"),
+  "Since the p-value is less than 0.05, there’s evidence of autocorrelation.\n"
 )
 
-q4_answer <- paste(
-  "The regression assumes independent errors (ZINE's Independence).\n",
-  "The DW test (DW < 2, p < 0.05) indicates first-order autocorrelation,\n",
-  "violating this assumption. This leads to biased standard errors,\n",
-  "unreliable t-tests, and inefficient estimates.\n"
+# Question 4: Why is autocorrelation a problem?
+q4_text <- paste(
+  "The regression assumes errors are independent (part of ZINE).\n",
+  "The DW test shows autocorrelation (DW < 2 and p < 0.05).\n",
+  "This messes up the standard errors, making t-tests unreliable.\n",
+  "The estimates are still okay but not as efficient.\n"
 )
 
-model2 <- gls(Sales ~ T, data = data, correlation = corAR1(), method = "ML")
-summary_model2 <- summary(model2)
+# Try a GLS model to fix autocorrelation
+gls_model <- gls(sales ~ time, data = sales_data, correlation = corAR1(), method = "ML")
+gls_summary <- summary(gls_model)
 
-q5_answer <- paste(
-  "I recommend a regression model (Sales = b0 + b1T) with first-order autocorrelation\n",
-  "correction using GLS with an AR(1) error structure, implemented via nlme::gls.\n"
+q5_text <- paste(
+  "I think we should use a GLS model with AR(1) autocorrelation correction.\n",
+  "It’s better than OLS because it handles the autocorrelation problem.\n",
+  "I used the nlme::gls function to do this.\n"
 )
 
-coef1 <- summary_model1$coefficients
-b0_1 <- coef1[1, 1]  
-b1_1 <- coef1[2, 1]  
-se_b0_1 <- coef1[1, 2]  
-se_b1_1 <- coef1[2, 2]  
+# Compare the two models for Question 6
+ols_coefs <- model_summary$coefficients
+ols_intercept <- ols_coefs[1, 1]
+ols_slope <- ols_coefs[2, 1]
+ols_se_intercept <- ols_coefs[1, 2]
+ols_se_slope <- ols_coefs[2, 2]
 
-xt
-coef2 <- summary_model2$tTable
-b0_2 <- coef2[1, 1]  
-b1_2 <- coef2[2, 1]  
-se_b0_2 <- coef2[1, 2]  
-se_b1_2 <- coef2[2, 2]  
+gls_coefs <- gls_summary$tTable
+gls_intercept <- gls_coefs[1, 1]
+gls_slope <- gls_coefs[2, 1]
+gls_se_intercept <- gls_coefs[1, 2]
+gls_se_slope <- gls_coefs[2, 2]
 
+# Print out the results to compare
+cat("Regular OLS Model:\n")
+cat("Intercept:", round(ols_intercept, 3), " (SE:", round(ols_se_intercept, 3), ")\n")
+cat("Slope:", round(ols_slope, 3), " (SE:", round(ols_se_slope, 3), ")\n\n")
+cat("GLS Model with AR(1):\n")
+cat("Intercept:", round(gls_intercept, 3), " (SE:", round(gls_se_intercept, 3), ")\n")
+cat("Slope:", round(gls_slope, 3), " (SE:", round(gls_se_slope, 3), ")\n")
 
-cat("Simple OLS (Model 1):\n")
-cat(sprintf("Intercept: %.3f, SE: %.3f\n", b0_1, se_b0_1))
-cat(sprintf("Slope: %.3f, SE: %.3f\n\n", b1_1, se_b1_1))
-cat("GLS with AR(1) (Model 2):\n")
-cat(sprintf("Intercept: %.3f, SE: %.3f\n", b0_2, se_b0_2))
-cat(sprintf("Slope: %.3f, SE: %.3f\n", b1_2, se_b1_2))
+# Calculate differences
+intercept_diff <- gls_intercept - ols_intercept
+slope_diff <- gls_slope - ols_slope
+se_intercept_change <- ifelse(gls_se_intercept > ols_se_intercept, "got bigger", "got smaller")
+se_slope_change <- ifelse(gls_se_slope > ols_se_slope, "got bigger", "got smaller")
 
-
-delta_b0 <- b0_2 - b0_1
-delta_b1 <- b1_2 - b1_1
-se_b0_change <- ifelse(se_b0_2 > se_b0_1, "increased", "decreased")
-se_b1_change <- ifelse(se_b1_2 > se_b1_1, "increased", "decreased")
-q6_answer <- paste(
-  sprintf("Simple OLS: Intercept = %.3f, SE = %.3f; Slope = %.3f, SE = %.3f.\n", b0_1, se_b0_1, b1_1, se_b1_1),
-  sprintf("GLS with AR(1): Intercept = %.3f, SE = %.3f; Slope = %.3f, SE = %.3f.\n", b0_2, se_b0_2, b1_2, se_b1_2),
-  sprintf("Intercept changed by %.3f, SE %s. Slope changed by %.3f, SE %s.\n", delta_b0, se_b0_change, delta_b1, se_b1_change),
-  "GLS provides more reliable estimates by accounting for autocorrelation.\n"
+q6_text <- paste(
+  paste("OLS: Intercept =", round(ols_intercept, 3), ", SE =", round(ols_se_intercept, 3), 
+        "; Slope =", round(ols_slope, 3), ", SE =", round(ols_se_slope, 3), "\n"),
+  paste("GLS: Intercept =", round(gls_intercept, 3), ", SE =", round(gls_se_intercept, 3), 
+        "; Slope =", round(gls_slope, 3), ", SE =", round(gls_se_slope, 3), "\n"),
+  paste("Intercept changed by", round(intercept_diff, 3), ", SE", se_intercept_change, ".\n"),
+  paste("Slope changed by", round(slope_diff, 3), ", SE", se_slope_change, ".\n"),
+  "The GLS model is better because it accounts for autocorrelation.\n"
 )
 
-sink(file.path(base_path, "lab8_results.txt"))
-cat("Question 1 Answer:\n", q1_answer, "\n")
-cat("Question 2 Answer:\n", q2_answer, "\n")
-cat("Question 3 Answer:\n", q3_answer, "\n")
-cat("Question 4 Answer:\n", q4_answer, "\n")
-cat("Question 5 Answer:\n", q5_answer, "\n")
-cat("Question 6 Answer:\n", q6_answer, "\n")
+# Save all my answers to a file
+sink(file.path(my_folder, "lab8_answers.txt"))
+cat("Question 1:\n", q1_text, "\n")
+cat("Question 2:\n", q2_text, "\n")
+cat("Question 3:\n", q3_text, "\n")
+cat("Question 4:\n", q4_text, "\n")
+cat("Question 5:\n", q5_text, "\n")
+cat("Question 6:\n", q6_text, "\n")
 sink()
+
+cat("Done! All results and plots are saved in", my_folder, "\n")
