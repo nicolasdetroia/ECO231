@@ -1,5 +1,6 @@
 # ECO231
 
+
 Question 1:
 
 Plot: Saved as sales_plot.png.
